@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>水元まつりの感想文ツール</title>
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "UD Digi Kyokasho NK-R", "UD デジタル 教科書体 N-R", "Hiragino Sans", "Yu Gothic", sans-serif;
+  background: linear-gradient(135deg, #fff6c9, #dff7ff, #ffe1ef);
+  color: #222;
+}
+
+button,
+textarea,
+input {
+  font-family: inherit;
+}
+
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.wrap {
+  min-height: 100vh;
+  padding: 20px 28px 28px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+
+.app-title {
+  font-size: 30px;
+  font-weight: 900;
+  color: #ff6b9a;
+  text-shadow: 2px 2px 0 #fff;
+}
+
+.save-status {
+  background: #fff;
+  border: 3px solid #99d8ff;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #2674a6;
+  white-space: nowrap;
+}
+
+.screen {
+  background: rgba(255, 255, 255, 0.92);
+  border: 5px solid #fff;
+  border-radius: 28px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.14);
+  padding: 26px;
+  min-height: calc(100vh - 96px);
+}
+
+h1 {
+  margin: 0 0 18px;
+  font-size: 38px;
+  line-height: 1.25;
+  color: #222;
+}
+
+h2 {
+  margin: 0 0 14px;
+  font-size: 30px;
+  color: #333;
+}
+
+.lead {
+  font-size: 24px;
+  line-height: 1.6;
+  font-weight: 700;
+  margin: 8px 0 22px;
+}
+
+.notice {
+  background: #fff7d6;
+  border: 3px solid #ffd36a;
+  border-radius: 18px;
+  padding: 14px 18px;
+  font-size: 21px;
+  line-height: 1.5;
+  font-weight: 700;
+  margin: 16px 0;
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 24px;
+  flex-wrap: wrap;
+}
+
+.name-row label {
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.name-row input {
+  font-size: 26px;
+  padding: 12px 16px;
+  border: 4px solid #9bd8ff;
+  border-radius: 16px;
+  min-width: 280px;
+  background: #fff;
+}
+
+.big-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin-top: 24px;
+}
+
+.big-btn {
+  border: 0;
+  border-radius: 28px;
+  padding: 34px 20px;
+  font-size: 34px;
+  font-weight: 900;
+  color: #222;
+  background: linear-gradient(180deg, #ffffff, #e8f7ff);
+  box-shadow: 0 8px 0 #8fcdf0, 0 12px 18px rgba(0,0,0,0.15);
+  cursor: pointer;
+}
+
+.big-btn:active {
+  transform: translateY(5px);
+  box-shadow: 0 3px 0 #8fcdf0;
+}
+
+.trip {
+  background: linear-gradient(180deg, #fff, #dff5ff);
+}
+
+.other {
+  background: linear-gradient(180deg, #fff, #ffe4f0);
+  box-shadow: 0 8px 0 #f4a5c4, 0 12px 18px rgba(0,0,0,0.15);
+}
+
+.progress {
+  display: flex;
+  gap: 10px;
+  margin: 8px 0 22px;
+  flex-wrap: wrap;
+}
+
+.step-pill {
+  background: #e9eef5;
+  color: #667;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.step-pill.now {
+  background: #ffcf5c;
+  color: #222;
+}
+
+.counter {
+  font-size: 28px;
+  font-weight: 900;
+  color: #ff5c8a;
+  margin: 14px 0 18px;
+}
+
+.memory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.memory-card {
+  min-height: 112px;
+  border: 4px solid #d4e8f7;
+  border-radius: 22px;
+  background: #fff;
+  padding: 14px 10px;
+  font-size: 22px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 5px 0 #c8ddeb;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.memory-card .icon {
+  font-size: 34px;
+  margin-bottom: 6px;
+}
+
+.memory-card.selected {
+  background: #fff2b7;
+  border-color: #ffba36;
+  box-shadow: 0 5px 0 #e59a17;
+}
+
+.memory-card.disabled {
+  opacity: 0.45;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  border: 0;
+  border-radius: 18px;
+  padding: 16px 26px;
+  font-size: 24px;
+  font-weight: 900;
+  cursor: pointer;
+  background: #e9eef5;
+  color: #222;
+  box-shadow: 0 5px 0 #b8c5d2;
+}
+
+.btn.primary {
+  background: #7bdcff;
+  box-shadow: 0 5px 0 #28a6d6;
+}
+
+.btn.good {
+  background: #9dffb5;
+  box-shadow: 0 5px 0 #48c86a;
+}
+
+.btn.danger {
+  background: #ff9aae;
+  box-shadow: 0 5px 0 #d6536f;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.question-box {
+  background: #f2fbff;
+  border: 4px solid #c4ecff;
+  border-radius: 24px;
+  padding: 20px;
+  margin: 18px 0;
+}
+
+.question-title {
+  font-size: 26px;
+  font-weight: 900;
+  margin-bottom: 10px;
+  color: #24526b;
+}
+
+.question-sub {
+  font-size: 18px;
+  font-weight: 700;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+textarea {
+  width: 100%;
+  min-height: 82px;
+  font-size: 24px;
+  line-height: 1.5;
+  padding: 14px 16px;
+  border: 4px solid #b8ddf5;
+  border-radius: 18px;
+  resize: vertical;
+  background: #fff;
+}
+
+.hint-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 4px;
+}
+
+.hint-btn,
+.feeling-btn,
+.summary-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 18px;
+  font-weight: 900;
+  background: #fff;
+  border: 3px solid #ffd36a;
+  cursor: pointer;
+}
+
+.feeling-btn {
+  border-color: #ffc7dc;
+  font-size: 20px;
+  padding: 12px 18px;
+}
+
+.feeling-btn.selected,
+.summary-btn.selected {
+  background: #ffdfeb;
+  border-color: #ff6b9a;
+}
+
+.summary-btn {
+  font-size: 24px;
+  padding: 16px 28px;
+  border-color: #ffb3cf;
+}
+
+.preview {
+  background: #fff;
+  border: 4px solid #d7e5ef;
+  border-radius: 22px;
+  padding: 18px;
+  margin-top: 18px;
+}
+
+.preview-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.preview-text {
+  font-size: 24px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.final-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+
+.edit-area,
+.print-preview {
+  background: #f9fcff;
+  border: 4px solid #d5ecff;
+  border-radius: 22px;
+  padding: 18px;
+}
+
+.essay-textarea {
+  min-height: 520px;
+  font-size: 22px;
+}
+
+.print-sheet {
+  background: #fff;
+  border: 2px solid #ddd;
+  padding: 28px;
+  min-height: 520px;
+  height: 620px;
+  writing-mode: horizontal-tb;
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: stretch;
+}
+
+.print-title {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  text-align: start;
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1.9;
+  letter-spacing: 0.08em;
+  padding-top: 3em;
+  margin-left: 22px;
+  min-width: 2em;
+}
+
+.print-name {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 22px;
+  line-height: 1.9;
+  margin-left: 22px;
+  min-width: 2em;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding-bottom: 3em;
+}
+
+.print-body {
+  --chars-per-line: 15;
+  writing-mode: horizontal-tb;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: 0;
+  flex: 0 0 auto;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: stretch;
+  gap: 0.8em;
+  overflow: visible;
+}
+
+.print-line {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  display: block;
+  width: 1.35em;
+  height: 100%;
+  flex: 0 0 auto;
+  line-height: 1.25;
+  white-space: pre;
+  overflow: hidden;
+  text-align: start;
+  font-feature-settings: "vert" 1;
+  -webkit-font-feature-settings: "vert" 1;
+}
+
+.print-char {
+  display: inline;
+}
+
+.restore-box {
+  max-width: 760px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+.screen.final-screen {
+  min-height: auto;
+  padding-bottom: 18px;
+}
+
+.final-screen .lead {
+  margin-bottom: 12px;
+}
+
+.final-screen .final-layout {
+  align-items: start;
+}
+
+.final-screen .edit-area,
+.final-screen .print-preview {
+  padding: 12px;
+}
+
+.final-screen .essay-textarea {
+  min-height: 430px;
+}
+
+.final-screen .print-sheet {
+  height: 500px;
+  min-height: 500px;
+  padding: 22px;
+}
+
+.final-screen .print-title {
+  font-size: 28px;
+  line-height: 1.7;
+  margin-left: 18px;
+}
+
+.final-screen .print-name {
+  font-size: 22px;
+  line-height: 1.7;
+  margin-left: 18px;
+  padding-bottom: 3em;
+}
+
+.final-screen .print-body {
+  font-size: 28px;
+  gap: 0.75em;
+}
+
+@media (max-width: 900px) {
+  .memory-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .final-layout {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 32px;
+  }
+}
+
+@page {
+  size: A4 landscape;
+  margin: 8mm;
+}
+
+@media print {
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    overflow: visible !important;
+  }
+
+  .no-print,
+  .topbar,
+  .edit-area,
+  .controls,
+  .notice {
+    display: none !important;
+  }
+
+  .wrap,
+  .screen,
+  .final-layout,
+  .print-preview {
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  .print-sheet {
+    width: 281mm !important;
+    height: 194mm !important;
+    box-sizing: border-box !important;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+    background: #fff !important;
+    writing-mode: horizontal-tb !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: row-reverse !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    break-after: page !important;
+    page-break-after: always !important;
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-sheet:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+
+  .print-title {
+    writing-mode: vertical-rl !important;
+    text-orientation: mixed !important;
+    font-size: 40pt !important;
+    font-weight: 900 !important;
+    line-height: 1.4 !important;
+    letter-spacing: 0.02em !important;
+    padding-top: 3em !important;
+    margin-left: 7mm !important;
+    min-width: 1.4em !important;
+    max-width: 1.4em !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .print-name {
+    writing-mode: vertical-rl !important;
+    text-orientation: mixed !important;
+    font-size: 40pt !important;
+    line-height: 1.4 !important;
+    letter-spacing: 0.02em !important;
+    margin-left: 7mm !important;
+    min-width: 1.4em !important;
+    max-width: 1.4em !important;
+    height: 100% !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: flex-start !important;
+    padding-bottom: 3em !important;
+    overflow: hidden !important;
+  }
+
+  .print-body {
+    --chars-per-line: 15;
+    writing-mode: horizontal-tb !important;
+    height: 100% !important;
+    font-size: 36pt !important;
+    line-height: 1 !important;
+    letter-spacing: 0 !important;
+    overflow: visible !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    flex: 0 0 auto !important;
+    display: flex !important;
+    flex-direction: row-reverse !important;
+    align-items: stretch !important;
+    gap: 0.8em !important;
+  }
+
+  .print-line {
+    writing-mode: vertical-rl !important;
+    text-orientation: mixed !important;
+    display: block !important;
+    width: 1.35em !important;
+    height: 100% !important;
+    flex: 0 0 auto !important;
+    line-height: 1.25 !important;
+    white-space: pre !important;
+    overflow: hidden !important;
+    text-align: start !important;
+    font-feature-settings: "vert" 1 !important;
+    -webkit-font-feature-settings: "vert" 1 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-char {
+    display: inline !important;
+  }
+
+  .print-spacer {
+    flex: 1 1 auto !important;
+  }
+}
+
+.activity-buttons { margin-top: 18px; gap: 20px; }
+.activity-buttons .big-btn { min-height: 100px; padding: 22px 12px; }
+.answer-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.answer-btn { font-size: clamp(21px,2.5vw,28px); line-height:1.35; font-weight:900; border:4px solid #b8ddf5; border-radius:20px; min-height:90px; padding:16px; background:white; color:#222; text-align:center; cursor:pointer; box-shadow:0 5px 0 #c8ddeb; }
+.chosen { background:#fff2b7; border-color:#ffba36; box-shadow:0 5px 0 #e59a17; }
+.answer-btn:disabled {opacity:.45;cursor:default;box-shadow:none;}
+.selection-note {font-size:clamp(18px,2.2vw,23px);font-weight:800;margin:8px 0 12px;color:#24526b;}
+.selection-count {color:#c54a78;margin-left:12px;white-space:nowrap;}
+.custom-label { display:block; font-size:22px; font-weight:900; margin:16px 0 5px; }
+.activity-label { margin:6px 0 12px; padding:8px 16px; }
+.warning-screen {display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;}
+.warning-message {font-size:clamp(32px,5vw,58px); margin-bottom:32px;}
+.warning-screen .controls {justify-content:center;}
+.warning-screen .btn {min-width:180px;}
+.warning-active .topbar {display:none;}
+.final-screen .final-layout {grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+.final-screen .print-preview {min-width:0;}
+@media screen and (max-width:700px) {
+  .wrap {padding:12px;}
+  .screen {padding:16px;}
+  .app-title {font-size:22px;}
+  .save-status {font-size:14px; padding:6px 10px;}
+  .activity-buttons .big-btn {font-size:24px;}
+  .answer-grid {grid-template-columns:1fr;}
+  .final-screen .final-layout {grid-template-columns:1fr;}
+}
+@media screen and (min-width:701px) and (max-height:790px) {
+  .wrap {padding:12px 22px 18px;}
+  .topbar {margin-bottom:6px;}
+  .screen {padding:16px 24px; min-height:calc(100dvh - 82px);}
+  .progress {margin:0 0 12px;gap:6px;}
+  .step-pill {font-size:15px;padding:5px 9px;}
+  h1 {font-size:32px; margin:0 0 10px;}
+  .lead {font-size:22px;margin:6px 0 12px;}
+  .answer-btn {min-height:71px;padding:10px;}
+  .controls {margin-top:16px;}
+  .btn {padding:12px 20px;}
+}
+
+/* 原稿用紙：隣の列とすき間なくつながる15マス×20列。 */
+.final-screen .print-sheet.manuscript-sheet {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 281 / 194;
+  padding: 0;
+  margin: 0 0 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  container-type: inline-size;
+}
+.manuscript-grid {
+  direction: ltr;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  width: 84%;
+  height: 93%;
+  flex: 0 0 84%;
+  color: #222;
+  --grid-color: #9b765e;
+  --grid-line: 1px;
+  font-size: 16px;
+  font-size: 3.2cqw;
+}
+.manuscript-column {
+  display: grid;
+  grid-template-rows: repeat(15, minmax(0, 1fr));
+  width: 5%;
+  height: 100%;
+  flex: 0 0 5%;
+  min-width: 0;
+  border-top: var(--grid-line) solid var(--grid-color);
+  border-right: var(--grid-line) solid var(--grid-color);
+}
+.manuscript-column:last-child {
+  border-left: var(--grid-line) solid var(--grid-color);
+}
+.manuscript-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  border-bottom: var(--grid-line) solid var(--grid-color);
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-feature-settings: "vert" 1;
+  line-height: 1;
+  white-space: pre;
+  overflow: hidden;
+}
+.manuscript-title .manuscript-cell {font-weight: 700;}
+@media screen and (min-width: 701px) {
+  .final-screen .final-layout {grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.65fr);}
+}
+@media print {
+  .final-screen .print-sheet.manuscript-sheet {
+    width: 280mm !important;
+    height: 193mm !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    aspect-ratio: auto !important;
+    justify-content: center !important;
+    align-items: center !important;
+    container-type: normal;
+  }
+  .manuscript-grid {
+    font-size: 26pt !important;
+    --grid-line: 0.5pt;
+    --grid-color: #777;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="topbar no-print">
+    <div class="app-title">水元まつりの感想文ツール</div>
+    <div class="save-status" id="saveStatus">じどうほぞん</div>
+  </div>
+
+  <main id="app" class="screen"></main>
+</div>
+
+<script>
+const STORAGE_KEY = "mizumoto_festival_reflection_v1";
+const TITLE = "水元まつりのかんそう";
+const ACTIVITIES = ["ツバメ", "つばさをください", "RPG", "ナレーション"];
+const EFFORTS = {
+  "つばさをください": [
+    ["楽器のえんそうをまちがえないようにした", "楽器のえんそうをまちがえないようにしました"],
+    ["合唱をおおきな声でうたった", "合唱をおおきな声でうたいました"],
+    ["いいしせいでかっこよく見えるようにした", "いいしせいでかっこよく見えるようにしました"],
+    ["顔を上げてお客さんの方を見るようにした", "顔を上げてお客さんの方を見るようにしました"]
+  ],
+  "RPG": [
+    ["手話のうごきを大きくていねいにできた", "手話のうごきを大きくていねいにできました"],
+    ["顔を上げてお客さんの方を見るようにした", "顔を上げてお客さんの方を見るようにしました"],
+    ["最後のポーズをかっこよくきめた", "最後のポーズをかっこよくきめました"]
+  ],
+  "ナレーション": [
+    ["読みまちがえないように気を付けた", "読みまちがえないように気を付けました"],
+    ["ていねいにはっきり発音するようにした", "ていねいにはっきり発音するようにしました"],
+    ["大きな声でげんこうを読み上げた", "大きな声でげんこうを読み上げました"]
+  ]
+};
+const FEELINGS = [
+  ["うまくできてうれしかった", "うまくできてうれしかったです"],
+  ["きんちょうしたけどがんばった", "きんちょうしたけどがんばりました"],
+  ["みんなと一緒にできてよかった", "みんなと一緒にできてよかったです"]
+];
+const SUMMARIES = [
+  ["中学さいごの水元まつりは楽しかった", "中学さいごの水元まつりは楽しかったです"],
+  ["高校生になっても、仲間とがんばろうと思った", "高校生になっても、仲間とがんばろうと思いました"],
+  ["みんなとのいい思い出になった", "みんなとのいい思い出になりました"]
+];
+const app = document.getElementById("app");
+const saveStatus = document.getElementById("saveStatus");
+const byId = id => document.getElementById(id);
+const blankAnswer = () => ({choices:[], custom:""});
+function normalizeAnswer(answer, max){
+  const values = Array.isArray(answer?.choices) ? answer.choices :
+    (answer?.choice ? [answer.choice] : []);
+  return {choices:[...new Set(values.filter(v=>typeof v==="string"&&v))].slice(0,max),
+    custom:typeof answer?.custom==="string"?answer.custom:""};
+}
+const initialState = () => ({step:"start", name:"", activity:"", effort:blankAnswer(),
+  feeling:blankAnswer(), summary:blankAnswer(), essay:"", generated:""});
+let restoreMode = false;
+let state = initialState();
+let saveTimer;
+try {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    const saved = JSON.parse(raw);
+    state = {...initialState(), ...saved};
+    if (state.activity === "RPG" && state.effort.choice === "手話のうごきをていねいにした") {
+      state.effort.choice = EFFORTS.RPG[0][0];
+      const oldSentence = "手話のうごきをていねいにしました";
+      state.essay = (state.essay || "").replaceAll(oldSentence, EFFORTS.RPG[0][1]);
+      state.generated = (state.generated || "").replaceAll(oldSentence, EFFORTS.RPG[0][1]);
+    }
+    if (state.summary.choice === "高等部でも仲間とがんばろうと思った") {
+      state.summary.choice = SUMMARIES[1][0];
+      const oldSentence = "高等部でも仲間とがんばろうと思いました";
+      state.essay = (state.essay || "").replaceAll(oldSentence, SUMMARIES[1][1]);
+      state.generated = (state.generated || "").replaceAll(oldSentence, SUMMARIES[1][1]);
+    }
+    state.effort = normalizeAnswer(state.effort, 2);
+    state.feeling = normalizeAnswer(state.feeling, 2);
+    state.summary = normalizeAnswer(state.summary, 1);
+    restoreMode = Boolean(state.name || state.step !== "start");
+  }
+} catch (e) {}
+
+function saveState(){
+  clearTimeout(saveTimer);
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    saveStatus.textContent = "ほぞんしました";
+    saveTimer = setTimeout(() => saveStatus.textContent = "じどうほぞん", 900);
+  } catch (e) { saveStatus.textContent = "ほぞんできません"; }
+}
+function go(step){
+  state.step = step;
+  saveState();
+  render();
+  window.scrollTo(0,0);
+}
+function clearSave(){
+  try {localStorage.removeItem(STORAGE_KEY);} catch(e){}
+  state = initialState();
+  restoreMode = false;
+  render();
+}
+function getEssayTitle(){return TITLE;}
+function progress(step){
+  const steps = ["start","activity","effort","feeling","summary","final"];
+  const labels = ["名前","① がんばったこと","② くわしく","③ 気もち","④ まとめ","作文"];
+  return '<div class="progress no-print">'+steps.map((s,i)=>
+    '<div class="step-pill '+(s===step?"now":"")+'">'+labels[i]+'</div>').join("")+'</div>';
+}
+function control(back, next, nextLabel="つぎへ"){
+  return '<div class="controls"><button class="btn" id="backBtn">もどる</button>'+
+    (next?'<button class="btn primary" id="nextBtn">'+nextLabel+'</button>':"")+'</div>';
+}
+function render(){
+  app.classList.toggle("final-screen", !restoreMode && state.step==="final");
+  app.classList.toggle("warning-screen", !restoreMode && state.step==="warning");
+  document.body.classList.toggle("warning-active", !restoreMode && state.step==="warning");
+  if(restoreMode){
+    app.innerHTML = '<div class="restore-box"><h1>ほぞんしたつづきがあります</h1>'+
+      '<div class="big-buttons"><button class="big-btn trip" id="continueBtn">つづきから</button>'+
+      '<button class="big-btn other" id="newBtn">はじめから</button></div></div>';
+    byId("continueBtn").onclick=()=>{restoreMode=false;render();};
+    byId("newBtn").onclick=()=>{if(confirm("ほぞんした文をけして、はじめから作りますか？"))clearSave();};
+    return;
+  }
+  switch(state.step){
+    case "activity": renderActivity(); break;
+    case "warning": renderWarning(); break;
+    case "effort": renderQuestion("effort","② どんなことをがんばりましたか？",EFFORTS[state.activity],"activity","feeling"); break;
+    case "feeling": renderQuestion("feeling","③ どんな気もちでしたか？",FEELINGS,"effort","summary"); break;
+    case "summary": renderQuestion("summary","④ 水元まつりはどうでしたか？",SUMMARIES,"feeling","final"); break;
+    case "final": renderFinal(); break;
+    default: renderStart();
+  }
+}
+function renderStart(){
+  app.innerHTML = progress("start") + '<h1>水元まつりの かんそうを書こう</h1>'+
+    '<p class="lead">しつもんにこたえて、かんそう文を作りましょう。</p>'+
+    '<div class="name-row"><label for="studentName">名前</label><input id="studentName" type="text" placeholder="名前を入れる" value="'+escapeHtml(state.name)+'"></div>'+
+    '<div class="controls"><button class="btn primary" id="startBtn">はじめる</button></div>';
+  byId("studentName").oninput=e=>{state.name=e.target.value;saveState();};
+  byId("startBtn").onclick=()=>go("activity");
+}
+function renderActivity(){
+  app.innerHTML=progress("activity")+'<h1>① 何を一番がんばりましたか？</h1>'+
+    '<p class="lead">1つ えらびましょう。</p><div class="big-buttons activity-buttons">'+
+    ACTIVITIES.map((a,i)=>'<button class="big-btn '+(a===state.activity?'chosen':'')+'" data-index="'+i+'">'+a+'</button>').join("")+
+    '</div>'+control("start",false);
+  byId("backBtn").onclick=()=>go("start");
+  app.querySelectorAll("[data-index]").forEach(btn=>btn.onclick=()=>{
+    const activity=ACTIVITIES[Number(btn.dataset.index)];
+    if(activity==="ツバメ"){go("warning");return;}
+    if(state.activity!==activity){state.activity=activity;state.effort=blankAnswer();}
+    go("effort");
+  });
+}
+function renderWarning(){
+  app.innerHTML='<h1 class="warning-message">本当にこれをやりましたか？</h1>'+
+    '<div class="controls"><button class="btn" id="backBtn">もどる</button></div>';
+  byId("backBtn").onclick=()=>go("activity");
+}
+function renderQuestion(key,title,options,back,next){
+  if(!options){go("activity");return;}
+  const answer=state[key];
+  const max = key==="summary" ? 1 : 2;
+  const isSelected = label => answer.choices.includes(label);
+  const hasOther = isSelected("その他");
+  const button = (label, i) => {
+    const chosen = isSelected(label);
+    const disabled = max===2 && answer.choices.length>=max && !chosen;
+    return '<button class="answer-btn '+(chosen?'chosen':'')+'" data-option="'+i+'" aria-pressed="'+chosen+'"'+(disabled?' disabled':'')+'>'+escapeHtml(label)+'</button>';
+  };
+  app.innerHTML=progress(key)+'<h1>'+title+'</h1>'+
+    (key==="effort"?'<div class="notice activity-label">'+escapeHtml(state.activity)+'</div>':"")+
+    (max===2?'<p class="selection-note">1つか2つ えらびましょう。<span class="selection-count">'+answer.choices.length+' / 2</span></p>':'')+
+    '<div class="answer-grid">'+options.map(([label],i)=>button(label,i)).join("")+
+    button("その他","other")+'</div>'+
+    (hasOther?'<label class="custom-label" for="otherInput">自分のことばで書こう</label><textarea id="otherInput" placeholder="ここに書く">'+escapeHtml(answer.custom)+'</textarea>':"")+
+    control(back,next,next==="final"?"作文にまとめる":"つぎへ");
+  const nextBtn=byId("nextBtn");
+  function updateNext(){nextBtn.disabled=!(answer.choices.length>=1 && (!answer.choices.includes("その他")||answer.custom.trim()));}
+  updateNext();
+  app.querySelectorAll("[data-option]").forEach(btn=>btn.onclick=()=>{
+    const label=btn.dataset.option==="other"?"その他":options[Number(btn.dataset.option)][0];
+    if(max===1) answer.choices=[label];
+    else if(isSelected(label)) answer.choices=answer.choices.filter(v=>v!==label);
+    else if(answer.choices.length<max) answer.choices.push(label);
+    else return;
+    saveState();
+    renderQuestion(key,title,options,back,next);
+    if(label==="その他" && answer.choices.includes("その他"))byId("otherInput").focus();
+  });
+  if(byId("otherInput"))byId("otherInput").oninput=e=>{answer.custom=e.target.value;saveState();updateNext();};
+  byId("backBtn").onclick=()=>go(back);
+  nextBtn.onclick=()=>{
+    if(nextBtn.disabled)return;
+    if(next==="final"){
+      const generated=generateEssay();
+      if(state.generated!==generated || !state.essay){
+        if(state.essay && state.generated && state.essay!==state.generated &&
+            !confirm("作文の答えを変更しました。新しい答えで作文を作り直しますか？"))return;
+        state.essay=generated;
+        state.generated=generated;
+      }
+    }
+    go(next);
+  };
+}
+function sentence(answer, options){
+  return answer.choices.map(choice=>{
+    const text=choice==="その他"?answer.custom.trim():
+      (options.find(([label])=>label===choice)||["",""])[1];
+    if(!text)return "";
+    return /[。！？!?]$/.test(text)?text:text+"。";
+  }).join("");
+}
+function generateEssay(){
+  const parts=[
+    "水元まつりで一番がんばったことは、「"+state.activity+"」です。",
+    sentence(state.effort,EFFORTS[state.activity])+sentence(state.feeling,FEELINGS),
+    sentence(state.summary,SUMMARIES)
+  ];
+  return parts.filter(Boolean).map(p=>"　"+p).join("\n");
+}
+function renderFinal(){
+  app.innerHTML=progress("final")+
+    '<div class="no-print"><h1>作文ができました</h1><p class="lead">文を直したいところがあれば、作文を直せます。</p></div>'+
+    '<div class="final-layout"><div class="edit-area no-print"><h2>作文を直す</h2><textarea id="essayText" class="essay-textarea">'+escapeHtml(state.essay)+'</textarea></div>'+
+    '<div id="printPreview" class="print-preview"></div></div>'+
+    '<div class="controls no-print"><button class="btn" id="backBtn">文づくりにもどる</button><button class="btn good" id="copyBtn">作文をコピー</button>'+
+    '<button class="btn primary" id="printBtn">PDFにする</button><button class="btn danger" id="resetBtn">はじめからやり直す</button></div>';
+  updatePrintPreview();
+  byId("essayText").oninput=e=>{state.essay=e.target.value;saveState();updatePrintPreview();};
+  byId("backBtn").onclick=()=>go("summary");
+  byId("copyBtn").onclick=async()=>{
+    const text=TITLE+"\n\n"+(state.name.trim()?"名前　"+state.name.trim()+"\n\n":"")+state.essay;
+    try{await navigator.clipboard.writeText(text);alert("作文をコピーしました。");}
+    catch(e){alert("コピーできませんでした。作文をえらんでコピーしてください。");}
+  };
+  byId("printBtn").onclick=()=>{updatePrintPreview();window.print();};
+  byId("resetBtn").onclick=()=>{if(confirm("書いた文をけして、はじめからやり直しますか？"))clearSave();};
+}
+
+function ensureParagraphIndent(text) {
+  const t = String(text || "").trim();
+  if (!t) return "";
+  return t.startsWith("　") ? t : `　${t}`;
+}
+
+const PRINT_CHARS_PER_LINE = 15;
+// 1ページ目は題名・名前の2列と本文18列、2ページ目以降は本文20列。
+// 1列15文字。合計300マスの原稿用紙。
+const FIRST_PAGE_LINE_COUNT = 18;
+const OTHER_PAGE_LINE_COUNT = 20;
+
+function splitTextByChars(text, maxChars) {
+  const chars = Array.from(text);
+  const lines = [];
+  for (let i = 0; i < chars.length; i += maxChars) {
+    lines.push(chars.slice(i, i + maxChars).join(""));
+  }
+  return lines;
+}
+
+function buildPrintLines(text) {
+  const rawParagraphs = String(text || "")
+    .split(/\n+/)
+    .map(ensureParagraphIndent)
+    .filter(Boolean);
+
+  const lines = [];
+  rawParagraphs.forEach(paragraph => {
+    splitTextByChars(paragraph, PRINT_CHARS_PER_LINE).forEach(line => lines.push(line));
+  });
+
+  return lines;
+}
+
+function chunkLinesForPages(lines) {
+  const pages = [];
+  let index = 0;
+
+  pages.push(lines.slice(index, index + FIRST_PAGE_LINE_COUNT));
+  index += FIRST_PAGE_LINE_COUNT;
+
+  while (index < lines.length) {
+    pages.push(lines.slice(index, index + OTHER_PAGE_LINE_COUNT));
+    index += OTHER_PAGE_LINE_COUNT;
+  }
+
+  if (pages.length === 0) pages.push([]);
+  return pages;
+}
+
+function renderManuscriptColumn(line, type = "") {
+  const chars = Array.from(line).slice(0, PRINT_CHARS_PER_LINE);
+  while (chars.length < PRINT_CHARS_PER_LINE) chars.push("");
+  return `<div class="manuscript-column ${type}">${chars.map(ch =>
+    `<span class="manuscript-cell">${escapeHtml(ch)}</span>`
+  ).join("")}</div>`;
+}
+
+function renderLineColumns(pageLines, count) {
+  return Array.from({length: count}, (_, i) =>
+    renderManuscriptColumn(pageLines[i] || "")
+  ).join("");
+}
+
+function updatePrintPreview() {
+  const preview = document.getElementById("printPreview");
+  if (!preview) return;
+
+  try {
+    const lines = buildPrintLines(state.essay || "");
+    const pages = chunkLinesForPages(lines);
+    const title = "　　" + getEssayTitle();
+    const nameChars = Array.from(state.name.trim()).slice(0, PRINT_CHARS_PER_LINE - 1);
+    const name = "　".repeat(PRINT_CHARS_PER_LINE - 1 - nameChars.length) + nameChars.join("") + "　";
+
+    preview.innerHTML = pages.map((pageLines, index) => {
+      const header = index === 0
+        ? renderManuscriptColumn(title, "manuscript-title") + renderManuscriptColumn(name, "manuscript-name")
+        : "";
+      const pageBody = renderLineColumns(pageLines, index === 0 ? FIRST_PAGE_LINE_COUNT : OTHER_PAGE_LINE_COUNT);
+      return `<div class="print-sheet manuscript-sheet"><div class="manuscript-grid">${header}${pageBody}</div></div>`;
+    }).join("");
+  } catch (e) {
+    preview.innerHTML = `
+      <div class="print-sheet">
+        <div class="print-title">${escapeHtml(getEssayTitle())}</div>
+        <div class="print-body"><div class="print-line">${escapeHtml(state.essay || "")}</div></div>
+      </div>
+    `;
+  }
+}
+
+window.addEventListener("beforeprint", updatePrintPreview);
+
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function escapeAttr(str) {
+  return escapeHtml(str).replaceAll("\n", " ");
+}
+
+render();
+</script>
+</body>
+</html>
