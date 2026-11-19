@@ -831,7 +831,7 @@ function normalizeAnswer(answer, max){
   return {choices:[...new Set(values.filter(v=>typeof v==="string"&&v))].slice(0,max),
     custom:typeof answer?.custom==="string"?answer.custom:""};
 }
-const initialState = () => ({step:"start", name:"", activity:"", effort:blankAnswer(),
+const initialState = () => ({step:"start", name:"", topic:"", activity:"", effort:blankAnswer(),
   feeling:blankAnswer(), summary:blankAnswer(), essay:"", generated:""});
 let restoreMode = false;
 let state = initialState();
@@ -841,6 +841,10 @@ try {
   if (raw) {
     const saved = JSON.parse(raw);
     state = {...initialState(), ...saved};
+    // 以前の版で作成した作文は、従来の「がんばったこと」として引き継ぐ。
+    if (!["effort","fun"].includes(state.topic) && !["start","topic"].includes(state.step)) {
+      state.topic = "effort";
+    }
     if (state.activity === "RPG" && state.effort.choice === "手話のうごきをていねいにした") {
       state.effort.choice = EFFORTS.RPG[0][0];
       const oldSentence = "手話のうごきをていねいにしました";
@@ -882,8 +886,8 @@ function clearSave(){
 }
 function getEssayTitle(){return TITLE;}
 function progress(step){
-  const steps = ["start","activity","effort","feeling","summary","final"];
-  const labels = ["名前","① がんばったこと","② くわしく","③ 気もち","④ まとめ","作文"];
+  const steps = ["start","topic","activity","effort","feeling","summary","final"];
+  const labels = ["名前","テーマ",state.topic==="fun"?"① 楽しかったこと":"① がんばったこと","② くわしく","③ 気もち","④ まとめ","作文"];
   return '<div class="progress no-print">'+steps.map((s,i)=>
     '<div class="step-pill '+(s===step?"now":"")+'">'+labels[i]+'</div>').join("")+'</div>';
 }
@@ -904,9 +908,10 @@ function render(){
     return;
   }
   switch(state.step){
+    case "topic": renderTopic(); break;
     case "activity": renderActivity(); break;
     case "warning": renderWarning(); break;
-    case "effort": renderQuestion("effort","② どんなことをがんばりましたか？",EFFORTS[state.activity],"activity","feeling"); break;
+    case "effort": renderQuestion("effort","② どのようにとりくみましたか？",EFFORTS[state.activity],"activity","feeling"); break;
     case "feeling": renderQuestion("feeling","③ どんな気もちでしたか？",FEELINGS,"effort","summary"); break;
     case "summary": renderQuestion("summary","④ 水元まつりはどうでしたか？",SUMMARIES,"feeling","final"); break;
     case "final": renderFinal(); break;
@@ -919,14 +924,26 @@ function renderStart(){
     '<div class="name-row"><label for="studentName">名前</label><input id="studentName" type="text" placeholder="名前を入れる" value="'+escapeHtml(state.name)+'"></div>'+
     '<div class="controls"><button class="btn primary" id="startBtn">はじめる</button></div>';
   byId("studentName").oninput=e=>{state.name=e.target.value;saveState();};
-  byId("startBtn").onclick=()=>go("activity");
+  byId("startBtn").onclick=()=>go("topic");
 }
-function renderActivity(){
-  app.innerHTML=progress("activity")+'<h1>① 何を一番がんばりましたか？</h1>'+
-    '<p class="lead">1つ えらびましょう。</p><div class="big-buttons activity-buttons">'+
-    ACTIVITIES.map((a,i)=>'<button class="big-btn '+(a===state.activity?'chosen':'')+'" data-index="'+i+'">'+a+'</button>').join("")+
+function renderTopic(){
+  app.innerHTML=progress("topic")+'<h1>どちらについて書きますか？</h1>'+
+    '<div class="big-buttons activity-buttons">'+
+    '<button class="big-btn trip '+(state.topic==="effort"?"chosen":"")+'" id="effortTopicBtn">がんばったこと</button>'+
+    '<button class="big-btn other '+(state.topic==="fun"?"chosen":"")+'" id="funTopicBtn">楽しかったこと</button>'+
     '</div>'+control("start",false);
   byId("backBtn").onclick=()=>go("start");
+  byId("effortTopicBtn").onclick=()=>{state.topic="effort";go("activity");};
+  byId("funTopicBtn").onclick=()=>{state.topic="fun";go("activity");};
+}
+function renderActivity(){
+  if(!state.topic){go("topic");return;}
+  const question=state.topic==="fun"?"何が一番楽しかったですか？":"何を一番がんばりましたか？";
+  app.innerHTML=progress("activity")+'<h1>① '+question+'</h1>'+
+    '<p class="lead">1つ えらびましょう。</p><div class="big-buttons activity-buttons">'+
+    ACTIVITIES.map((a,i)=>'<button class="big-btn '+(a===state.activity?'chosen':'')+'" data-index="'+i+'">'+a+'</button>').join("")+
+    '</div>'+control("topic",false);
+  byId("backBtn").onclick=()=>go("topic");
   app.querySelectorAll("[data-index]").forEach(btn=>btn.onclick=()=>{
     const activity=ACTIVITIES[Number(btn.dataset.index)];
     if(activity==="ツバメ"){go("warning");return;}
@@ -996,7 +1013,7 @@ function sentence(answer, options){
 }
 function generateEssay(){
   const parts=[
-    "水元まつりで一番がんばったことは、「"+state.activity+"」です。",
+    "水元まつりで一番"+(state.topic==="fun"?"楽しかった":"がんばった")+"ことは、「"+state.activity+"」です。",
     sentence(state.effort,EFFORTS[state.activity])+sentence(state.feeling,FEELINGS),
     sentence(state.summary,SUMMARIES)
   ];
