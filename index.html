@@ -666,6 +666,9 @@ textarea {
 .answer-btn:disabled {opacity:.45;cursor:default;box-shadow:none;}
 .selection-note {font-size:clamp(18px,2.2vw,23px);font-weight:800;margin:8px 0 12px;color:#24526b;}
 .selection-count {color:#c54a78;margin-left:12px;white-space:nowrap;}
+.title-entry {margin:14px 0 4px;}
+.title-entry input {display:block;width:100%;max-width:100%;padding:12px;font:inherit;font-size:clamp(23px,3vw,32px);border:3px solid #b8ddf5;border-radius:12px;background:#fff;color:#222;}
+.title-entry .selection-note {margin:6px 0;}
 .custom-label { display:block; font-size:22px; font-weight:900; margin:16px 0 5px; }
 .activity-label { margin:6px 0 12px; padding:8px 16px; }
 .warning-screen {display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;}
@@ -792,6 +795,8 @@ textarea {
 <script>
 const STORAGE_KEY = "mizumoto_festival_reflection_v1";
 const TITLE = "水元まつりのかんそう";
+const TITLE_OPTIONS = ["水元まつりの思い出","水元まつりでがんばったこと","楽しかった水元まつり","中学さいごの水元まつり"];
+const TITLE_MAX_LENGTH = 15;
 const ACTIVITIES = ["ツバメ", "つばさをください", "RPG", "ナレーション"];
 const EFFORTS = {
   "つばさをください": [
@@ -832,7 +837,7 @@ function normalizeAnswer(answer, max){
     custom:typeof answer?.custom==="string"?answer.custom:""};
 }
 const initialState = () => ({step:"start", name:"", topic:"", activity:"", effort:blankAnswer(),
-  feeling:blankAnswer(), summary:blankAnswer(), essay:"", generated:""});
+  feeling:blankAnswer(), summary:blankAnswer(), titleChoice:"", customTitle:"", essay:"", generated:""});
 let restoreMode = false;
 let state = initialState();
 let saveTimer;
@@ -860,6 +865,8 @@ try {
     state.effort = normalizeAnswer(state.effort, 2);
     state.feeling = normalizeAnswer(state.feeling, 2);
     state.summary = normalizeAnswer(state.summary, 1);
+    state.customTitle = limitTitle(state.customTitle);
+    if (state.step === "final" && !chosenTitle()) state.step = "title";
     restoreMode = Boolean(state.name || state.step !== "start");
   }
 } catch (e) {}
@@ -884,10 +891,17 @@ function clearSave(){
   restoreMode = false;
   render();
 }
-function getEssayTitle(){return TITLE;}
+function limitTitle(value){
+  return Array.from(String(value||"").replace(/[\r\n]/g,"")).slice(0,TITLE_MAX_LENGTH).join("");
+}
+function chosenTitle(){
+  if(state.titleChoice==="custom")return limitTitle(state.customTitle).trim();
+  return TITLE_OPTIONS.includes(state.titleChoice)?state.titleChoice:"";
+}
+function getEssayTitle(){return chosenTitle()||TITLE;}
 function progress(step){
-  const steps = ["start","topic","activity","effort","feeling","summary","final"];
-  const labels = ["名前","テーマ",state.topic==="fun"?"① 楽しかったこと":"① がんばったこと","② くわしく","③ 気もち","④ まとめ","作文"];
+  const steps = ["start","topic","activity","effort","feeling","summary","title","final"];
+  const labels = ["名前","テーマ",state.topic==="fun"?"① 楽しかったこと":"① がんばったこと","② くわしく","③ 気もち","④ まとめ","タイトル","作文"];
   return '<div class="progress no-print">'+steps.map((s,i)=>
     '<div class="step-pill '+(s===step?"now":"")+'">'+labels[i]+'</div>').join("")+'</div>';
 }
@@ -913,7 +927,8 @@ function render(){
     case "warning": renderWarning(); break;
     case "effort": renderQuestion("effort","② どのようにとりくみましたか？",EFFORTS[state.activity],"activity","feeling"); break;
     case "feeling": renderQuestion("feeling","③ どんな気もちでしたか？",FEELINGS,"effort","summary"); break;
-    case "summary": renderQuestion("summary","④ 水元まつりはどうでしたか？",SUMMARIES,"feeling","final"); break;
+    case "summary": renderQuestion("summary","④ 水元まつりはどうでしたか？",SUMMARIES,"feeling","title"); break;
+    case "title": renderTitle(); break;
     case "final": renderFinal(); break;
     default: renderStart();
   }
@@ -991,16 +1006,52 @@ function renderQuestion(key,title,options,back,next){
   byId("backBtn").onclick=()=>go(back);
   nextBtn.onclick=()=>{
     if(nextBtn.disabled)return;
-    if(next==="final"){
-      const generated=generateEssay();
-      if(state.generated!==generated || !state.essay){
-        if(state.essay && state.generated && state.essay!==state.generated &&
-            !confirm("作文の答えを変更しました。新しい答えで作文を作り直しますか？"))return;
-        state.essay=generated;
-        state.generated=generated;
-      }
-    }
     go(next);
+  };
+}
+function renderTitle(){
+  const options=TITLE_OPTIONS.map((title,i)=>
+    '<button class="answer-btn '+(state.titleChoice===title?'chosen':'')+'" data-title="'+i+'" aria-pressed="'+(state.titleChoice===title)+'">'+escapeHtml(title)+'</button>'
+  ).join("");
+  app.innerHTML=progress("title")+'<h1>タイトルを決めましょう</h1>'+
+    '<p class="selection-note">1つ えらぶか、自分で書きましょう。</p>'+
+    '<div class="answer-grid">'+options+
+    '<button class="answer-btn '+(state.titleChoice==="custom"?"chosen":"")+'" data-title="custom" aria-pressed="'+(state.titleChoice==="custom")+'">自分でタイトルを書く</button></div>'+
+    (state.titleChoice==="custom"?'<div class="title-entry"><label class="custom-label" for="titleInput">タイトル（15文字以内）</label><input id="titleInput" type="text" placeholder="ここに書く" value="'+escapeHtml(state.customTitle)+'"><p class="selection-note"><span id="titleCount">'+Array.from(state.customTitle).length+'</span> / 15文字</p></div>':'')+
+    control("summary","final","作文にまとめる");
+  const nextBtn=byId("nextBtn");
+  function updateNext(){nextBtn.disabled=!chosenTitle();}
+  updateNext();
+  app.querySelectorAll("[data-title]").forEach(btn=>btn.onclick=()=>{
+    state.titleChoice=btn.dataset.title==="custom"?"custom":TITLE_OPTIONS[Number(btn.dataset.title)];
+    saveState();
+    renderTitle();
+    if(state.titleChoice==="custom")byId("titleInput").focus();
+  });
+  const input=byId("titleInput");
+  if(input){
+    function syncInput(){
+      const value=limitTitle(input.value);
+      if(input.value!==value)input.value=value;
+      state.customTitle=value;
+      byId("titleCount").textContent=Array.from(value).length;
+      saveState();
+      updateNext();
+    }
+    input.oninput=e=>{if(!e.isComposing)syncInput();};
+    input.oncompositionend=syncInput;
+  }
+  byId("backBtn").onclick=()=>go("summary");
+  nextBtn.onclick=()=>{
+    if(!chosenTitle())return;
+    const generated=generateEssay();
+    if(state.generated!==generated || !state.essay){
+      if(state.essay && state.generated && state.essay!==state.generated &&
+          !confirm("作文の答えを変更しました。新しい答えで作文を作り直しますか？"))return;
+      state.essay=generated;
+      state.generated=generated;
+    }
+    go("final");
   };
 }
 function sentence(answer, options){
@@ -1024,13 +1075,13 @@ function renderFinal(){
     '<div class="no-print"><h1>作文ができました</h1><p class="lead">文を直したいところがあれば、作文を直せます。</p></div>'+
     '<div class="final-layout"><div class="edit-area no-print"><h2>作文を直す</h2><textarea id="essayText" class="essay-textarea">'+escapeHtml(state.essay)+'</textarea></div>'+
     '<div id="printPreview" class="print-preview"></div></div>'+
-    '<div class="controls no-print"><button class="btn" id="backBtn">文づくりにもどる</button><button class="btn good" id="copyBtn">作文をコピー</button>'+
+    '<div class="controls no-print"><button class="btn" id="backBtn">タイトルにもどる</button><button class="btn good" id="copyBtn">作文をコピー</button>'+
     '<button class="btn primary" id="printBtn">PDFにする</button><button class="btn danger" id="resetBtn">はじめからやり直す</button></div>';
   updatePrintPreview();
   byId("essayText").oninput=e=>{state.essay=e.target.value;saveState();updatePrintPreview();};
-  byId("backBtn").onclick=()=>go("summary");
+  byId("backBtn").onclick=()=>go("title");
   byId("copyBtn").onclick=async()=>{
-    const text=TITLE+"\n\n"+(state.name.trim()?"名前　"+state.name.trim()+"\n\n":"")+state.essay;
+    const text=getEssayTitle()+"\n\n"+(state.name.trim()?"名前　"+state.name.trim()+"\n\n":"")+state.essay;
     try{await navigator.clipboard.writeText(text);alert("作文をコピーしました。");}
     catch(e){alert("コピーできませんでした。作文をえらんでコピーしてください。");}
   };
@@ -1110,7 +1161,8 @@ function updatePrintPreview() {
   try {
     const lines = buildPrintLines(state.essay || "");
     const pages = chunkLinesForPages(lines);
-    const title = "　　" + getEssayTitle();
+    const titleText = limitTitle(getEssayTitle());
+    const title = "　".repeat(Math.min(2, Math.max(0, PRINT_CHARS_PER_LINE - Array.from(titleText).length))) + titleText;
     const nameChars = Array.from(state.name.trim()).slice(0, PRINT_CHARS_PER_LINE - 1);
     const name = "　".repeat(PRINT_CHARS_PER_LINE - 1 - nameChars.length) + nameChars.join("") + "　";
 
